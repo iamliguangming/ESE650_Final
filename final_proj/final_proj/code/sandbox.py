@@ -14,9 +14,9 @@ from flightsim.crazyflie_params import quad_params
 from flightsim.simulate import Quadrotor, simulate, ExitStatus
 from flightsim.world import World
 
-from final_proj.code.occupancy_map import OccupancyMap
-from final_proj.code.se3_control import SE3Control
-from final_proj.code.world_traj import WorldTraj
+from occupancy_map import OccupancyMap
+from se3_control import SE3Control
+from world_traj import WorldTraj
 
 # Improve figure display on high DPI screens.   
 # mpl.rcParams['figure.dpi'] = 200
