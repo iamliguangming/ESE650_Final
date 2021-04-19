@@ -216,8 +216,8 @@ ax.legend(handles=[
 # Instead of viewing the animation live, you may provide a .mp4 filename to save.
 
 R = Rotation.from_quat(state['q']).as_dcm()
-# animate(sim_time, state['x'], R, world=world, filename=None, show_axes=True)
-animate(sim_time, state['x'], R, world=world, filename='asdf.gif', show_axes=True)
+animate(sim_time, state['x'], R, world=world, filename=None, show_axes=True)
+# animate(sim_time, state['x'], R, world=world, filename='asdf.gif', show_axes=True)
 
 
 

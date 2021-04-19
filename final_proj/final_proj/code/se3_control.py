@@ -98,6 +98,9 @@ class SE3Control(object):
         phi, theta, psi =  Rotation.from_quat(state['q']).as_euler('XYZ')
         R = np.eye(4)
         Q = C_mat.T @ C_mat
+        Q[0,0] = 15
+        Q[2,2] = 15
+        Q[4,4] = 15
         K, P ,E = ctrl.lqr(A_mat, B_mat, Q, R)
 
         y_v = C_mat @ x_v 
