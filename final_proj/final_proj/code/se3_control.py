@@ -47,6 +47,7 @@ class SE3Control(object):
 
         # STUDENT CODE HERE
 
+
     def update(self, t, state, flat_output):
         cmd_motor_speeds = np.zeros((4,))
         cmd_thrust = 0  
@@ -65,7 +66,7 @@ class SE3Control(object):
         A_mat = np.array([[0,1,0,0,0,0,0,0,0,0,0,0],
                           [0,0,0,0,0,0,0,0,self.g,0,0,0],
                           [0,0,0,1,0,0,0,0,0,0,0,0],
-                          [0,0,0,0,0,0,self.g,0,0,0,0,0],
+                          [0,0,0,0,0,0,-self.g,0,0,0,0,0],
                           [0,0,0,0,0,1,0,0,0,0,0,0],
                           [0,0,0,0,0,0,0,0,0,0,0,0],
                           [0,0,0,0,0,0,0,1,0,0,0,0],
@@ -83,27 +84,40 @@ class SE3Control(object):
                           [0,0,0,0],
                           [0,1/self.Ixx,0,0],
                           [0,0,0,0],
+                          [0,0,1/self.Iyy,0],
                           [0,0,0,0],
-                          [0,0,self.Iyy,0],
-                          [0,0,0,self.Izz]])
+                          [0,0,0,1/self.Izz]])
         C_mat = np.array([[1,0,0,0,0,0,0,0,0,0,0,0],
                           [0,0,1,0,0,0,0,0,0,0,0,0],
                           [0,0,0,0,1,0,0,0,0,0,0,0],
                           [0,0,0,0,0,0,1,0,0,0,0,0],
                           [0,0,0,0,0,0,0,0,1,0,0,0],
                           [0,0,0,0,0,0,0,0,0,0,1,0]])
-        D_mat = np.zeros((4,6))
+        D_mat = np.zeros((6,4))
+        # rAB = Rotation.from_quat(state['q']).as_matrix()  
+        phi, theta, psi =  Rotation.from_quat(state['q']).as_euler('XYZ')
         R = np.eye(4)
         Q = C_mat.T @ C_mat
         K, P ,E = ctrl.lqr(A_mat, B_mat, Q, R)
 
         y_v = C_mat @ x_v 
 
-        r_des = np.hstack((flat_output['x'], np.array([0,0,flat_output['yaw']])))
+        # r_des = np.hstack((flat_output['x'], np.array([0,0,flat_output['yaw']])))
         
-        e = r_des - y_v
+        r_des = np.array([flat_output['x'][0], flat_output['x_dot'][0],flat_output['x'][1], flat_output['x_dot'][1], 
+        flat_output['x'][2], flat_output['x_dot'][2], 0, 0, 0, 0, flat_output['yaw'], flat_output['yaw_dot']])
+        
+        # x_v = np.array([p[0],v[0],p[1],v[1],p[2],v[2],r[0],w[0],r[1],w[1],r[2],w[2]])
+        
+        # e_dot = r_des - y_v
+        u_r = np.array([self.mass * self.g, 0,0,0])
+        u = -K @ (x_v - r_des) + u_r
+        # u
 
-        u = -K @ x_v + self.KI @ e
+        to_force = np.array([[1,1,1,1],
+                             [self.arm_length,0,-self.arm_length,0],
+                             [0, self.arm_length, 0, -self.arm_length],
+                             [-self.gamma,self.gamma,-self.gamma,self.gamma]])
 
         Matrix_u = np.array([[1,1,1,1],[0,self.arm_length,0,-self.arm_length],[-self.arm_length,0,self.arm_length,0],[self.gamma,-self.gamma,self.gamma,-self.gamma]])
         
@@ -113,15 +127,13 @@ class SE3Control(object):
         cmd_motor_speeds = np.sqrt(np.matmul(np.linalg.inv(Matrix_u), u)/self.k_thrust)
         cmd_thrust  = np.matmul(np.linalg.inv(Matrix_u), u)
         # cmd_q = Rotation.from_matrix(R_des).as_quat()
-        # STUDENT CODE HERE
+        # STUDENT CODE HERE 
 
         control_input = {'cmd_motor_speeds':cmd_motor_speeds,
                          'cmd_thrust':cmd_thrust,
                          'cmd_moment':cmd_moment,
                          'cmd_q':cmd_q}
         return control_input
-
-
 
     # def update(self, t, state, flat_output):
     #     """
